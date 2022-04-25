@@ -5,12 +5,14 @@ import sys
 config = configparser.ConfigParser()
 config.read("config.ini")
 
+# Removes all files that is created by the script.
 def resetBuild():
     os.remove("nginx-proxy/nginx.conf")
     os.removedirs("nginx-proxy")
     os.remove("docker-compose.yml")
     os.remove("Dockerfile")
 
+# A config for nginx. This one needs a overhaul.
 def nginx_conf():
     if not os.path.exists("nginx-proxy"):
         os.mkdir("nginx-proxy")
@@ -18,6 +20,7 @@ def nginx_conf():
     nginx_config.write("upstream backend {\n    server webserver1;\n    server webserver2;\n  }\n")
     nginx_config.write("  server {\n    listen 80;\n    location / {\n      proxy_pass http://backend;\n    }\n}")
 
+# Takes information from [dockerfile] in the config and writes it to a Dockerfile
 def nginx_dockerfile():
     if os.path.exists("Dockerfile"):
         os.remove("Dockerfile")
@@ -27,9 +30,11 @@ def nginx_dockerfile():
         add_to_file = str(keys.upper()+ " "+ value+ "\n")
         dockerfile.write(add_to_file)
 
+# Takes information from the config.ini and writes a docker-compose file.
 def docker_compose():
     services = []
 
+    # Takes lines in config.ini and puts them without brackets in a list.
     with open ("config.ini", "r") as cnf:
         for line in cnf:
             if "[" in line[0]:
@@ -39,6 +44,7 @@ def docker_compose():
     dockercompose.write("version: \"3.0\"\n")
     dockercompose.write("services:\n")
 
+    # Takes the services from the servicelist and adds them to the docker-compose.
     for i in services:
         if i != "networks" and i != "dockerfile":
             data = dict(config.items(i))
@@ -60,6 +66,7 @@ def docker_compose():
                         dockercompose.write(add_to_file)
             dockercompose.write("\n")
 
+        # Special part to add a network to the compose file.
         elif i == "networks":
             dockercompose.write(i + ":\n")
             dockercompose.write("  " + config.get(i, "network") + ":\n")
@@ -72,10 +79,12 @@ def docker_compose():
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 1:
+    # Check for remove argument.
+    if len(sys.argv) == 2:
         remove = sys.argv[1]
         if remove.lower() == "remove":
             resetBuild()
+    # Build the files if no arguments.
     else:
         nginx_conf()
         docker_compose()
