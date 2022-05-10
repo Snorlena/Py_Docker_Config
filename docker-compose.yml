@@ -1,0 +1,39 @@
+version: "3.0"
+services:
+  proxy:
+    build: ./
+    volumes:
+    - ./nginx-proxy:/etc/nginx/conf.d/
+    privileged: true
+    networks:
+      examlab.io:
+        ipv4_address: 10.10.0.4
+    ports:
+    - 9898:80
+
+  webserver1:
+    image: nginx
+    volumes:
+    - ./webpage1:/usr/share/nginx/html/
+    privileged: true
+    networks:
+      examlab.io:
+        ipv4_address: 10.10.0.5
+
+  webserver2:
+    image: nginx
+    volumes:
+    - ./webpage2:/usr/share/nginx/html/
+    privileged: true
+    networks:
+      examlab.io:
+        ipv4_address: 10.10.0.6
+
+networks:
+  examlab.io:
+    name: examlab.io
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.10.0.0/24
+          gateway: 10.10.0.1
